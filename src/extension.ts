@@ -9,7 +9,8 @@ import {
   genEnvFile,
   patchCompileCommands,
   clearCache,
-  checkMesonIsConfigured
+  checkMesonIsConfigured,
+  getOutputChannel
 } from "./utils";
 import { DebugConfigurationProvider } from "./configprovider";
 import {
@@ -24,6 +25,7 @@ import {
   activateFormatters
 } from "./formatters"
 import { TaskQuickPickItem } from "./types";
+import { SwiftMesonLspLanguageClient } from "./lsp/swift-mesonlsp";
 
 export let extensionPath: string;
 let explorer: MesonProjectExplorer;
@@ -41,9 +43,6 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
   const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
   const buildDir = workspaceRelative(extensionConfiguration("buildFolder"));
-
-  activateLinters(root, ctx);
-  activateFormatters(ctx);
 
   explorer = new MesonProjectExplorer(ctx, root, buildDir);
 
@@ -199,10 +198,54 @@ export async function activate(ctx: vscode.ExtensionContext) {
           break;
       }
     }
+  }
 
-    if (configureOnOpen === true) {
-      runFirstTask("reconfigure");
+  const downloadLanguageServerKey = "downloadLanguageServer";
+  const downloadLanguageServer = extensionConfiguration(downloadLanguageServerKey);
+  const languageServerKey = "languageServer"
+  const lsKey = extensionConfiguration(languageServerKey);
+  const possibleServers = {
+    "Swift-MesonLSP": SwiftMesonLspLanguageClient
+  }
+  const client = new possibleServers[lsKey](ctx);
+  const canDownload = client.canDownloadLanguageServer();
+  let registerTooling = true;
+  if (canDownload && downloadLanguageServer == "ask") {
+    enum Options {
+      yes = "Yes",
+      no = "Not this time",
+      never = "Never"
     }
+    const response = await vscode.window.showInformationMessage(
+      `Would you like to download a language server? (${client.repoURL})`,
+      ...Object.values(Options)
+    );
+
+    switch (response) {
+      case Options.no:
+        extensionConfigurationSet(downloadLanguageServerKey, "ask", vscode.ConfigurationTarget.Global);
+        break;
+
+      case Options.never:
+        extensionConfigurationSet(downloadLanguageServerKey, "never", vscode.ConfigurationTarget.Global);
+        break;
+
+      case Options.yes:
+        registerTooling = false;
+        client.setupLanguageServer();
+        extensionConfigurationSet(downloadLanguageServerKey, "yes", vscode.ConfigurationTarget.Global);
+        break;
+    }
+  } else if (canDownload && downloadLanguageServer == "yes") {
+    registerTooling = false;
+    client.setupLanguageServer();
+  }
+
+  if (registerTooling) {
+    activateLinters(root, ctx);
+    activateFormatters(ctx);
+  } else {
+    getOutputChannel().appendLine("Not enabling the muon linter/formatter because the language server is active!");
   }
 
   async function pickTask(mode: string) {
@@ -248,4 +291,12 @@ export async function activate(ctx: vscode.ExtensionContext) {
       runTask(taskItem.task);
     }
   }
+
+  ctx.subscriptions.push(client);
+
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand("mesonbuild.restartLanguageServer", async () => {
+      client.restart();
+    })
+  );
 }

@@ -27,6 +27,9 @@ export interface ExtensionConfiguration {
     muonConfig: string | null,
   };
   debugOptions: object;
+  languageServer: "Swift-MesonLSP";
+  languageServerPath: string;
+  downloadLanguageServer: string;
 }
 
 export interface TaskQuickPickItem extends vscode.QuickPickItem {

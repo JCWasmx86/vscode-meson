@@ -2,6 +2,10 @@
 
 ## next
 
+- Add integration for [Swift-MesonLSP](https://github.com/JCWasmx86/Swift-MesonLSP).
+  vscode-meson will automatically download it on Windows and MacOS. Linux users should
+  follow the [docs](https://github.com/JCWasmx86/Swift-MesonLSP/tree/main/Docs)
+
 ## 1.9.0
 
 - Automatically configure Intellisense to use compile_commands.json generated
