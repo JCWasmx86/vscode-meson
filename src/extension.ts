@@ -7,6 +7,7 @@ import {
   runMesonReconfigure,
   runMesonInstall
 } from "./meson/runners";
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
 import { getMesonTasks } from "./tasks";
 import { MesonProjectExplorer } from "./treeview";
 import { TargetNode } from "./treeview/nodes/targets"
@@ -36,6 +37,7 @@ import {
 import {
   activateFormatters
 } from "./formatters"
+import { MesonLanguageClient } from './lsp'
 
 export let extensionPath: string;
 let explorer: MesonProjectExplorer;
@@ -308,4 +310,6 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
     explorer.refresh();
   }
+  let client = new MesonLanguageClient(ctx)
+  ctx.subscriptions.push(client)
 }

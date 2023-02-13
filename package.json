@@ -177,6 +177,11 @@
             ]
           },
           "description": "Give an object that's merged into the debug configuration provider"
+        },
+        "mesonbuild.languageServerPath": {
+          "type": "string",
+          "description": "Binary name or path to language server",
+          "default": ""
         }
       }
     },
@@ -323,7 +328,11 @@
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.1.59",
-    "typescript": "^4.4.4"
+    "typescript": "^4.4.4",
+    "@types/which": "^2.0.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "vscode-languageclient": "8.0.2",
+    "which": "3.0.0"
+  }
 }
