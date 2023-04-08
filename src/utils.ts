@@ -197,6 +197,9 @@ export async function downloadLanguageServer() {
     }
     const zip = new Admzip(tmpPath);
     zip.extractAllTo(lspDir);
+    if (os.platform() != "win32") {
+      fs.chmodSync(path.join(lspDir, "Swift-MesonLSP"), 0o755);
+    }
     await unlink(tmpPath);
   } catch (err) {
     vscode.window.showErrorMessage(JSON.stringify(err));
