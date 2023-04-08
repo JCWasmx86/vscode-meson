@@ -5,6 +5,7 @@ import * as cp from "child_process";
 import * as vscode from "vscode";
 import * as os from "os";
 import * as child_process from "child_process";
+import * as Admzip from "adm-zip";
 import { createHash, BinaryLike } from "crypto";
 import { Target } from "./meson/types";
 import { ExtensionConfiguration } from "./types";
@@ -194,6 +195,9 @@ export async function downloadLanguageServer() {
       vscode.window.showErrorMessage(`Bad hash: Expected ${expected}, got ${hash}!`);
       return;
     }
+    const zip = new Admzip(tmpPath);
+    zip.extractAllTo(lspDir);
+    await unlink(tmpPath);
   } catch (err) {
     vscode.window.showErrorMessage(JSON.stringify(err));
     return;
