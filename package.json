@@ -326,15 +326,16 @@
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.0",
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.1.59",
-    "typescript": "^4.4.4",
     "@types/which": "^2.0.2",
-    "@types/adm-zip": "^0.5.0"
+    "typescript": "^4.4.4"
   },
   "dependencies": {
+    "adm-zip": "0.5.10",
+    "axios": "^1.3.5",
     "vscode-languageclient": "8.0.2",
-    "which": "3.0.0",
-    "adm-zip": "0.5.10"
+    "which": "3.0.0"
   }
 }

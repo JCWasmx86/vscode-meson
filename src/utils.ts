@@ -11,6 +11,7 @@ import { Target } from "./meson/types";
 import { ExtensionConfiguration } from "./types";
 import { getMesonBuildOptions } from "./meson/introspection";
 import { extensionPath } from "./extension";
+import axios from "axios";
 
 export async function exec(
   command: string,
@@ -198,51 +199,30 @@ export async function downloadLanguageServer() {
   await rmdir(lspDir);
   await mkdirp(lspDir);
   const tmpPath = path.join(os.tmpdir(), `lsp-${Date.now()}.zip`);
-  try {
-    const x = child_process.spawnSync("curl", ["-L", "-q", createDownloadURL(), "-o", tmpPath], { maxBuffer: 1024*1024*1024*24 });
-    if (x.status != 0) {
-      vscode.window.showErrorMessage(x.output.toString());
-      return;
-    }
-    const hash = await computeFileHash(tmpPath);
-    const expected = createHashForLanguageServer();
-    if (hash != expected) {
-      vscode.window.showErrorMessage(`Bad hash: Expected ${expected}, got ${hash}!`);
-      return;
-    }
-    const zip = new Admzip(tmpPath);
-    zip.extractAllTo(lspDir);
-    if (os.platform() != "win32") {
-      fs.chmodSync(path.join(lspDir, "Swift-MesonLSP"), 0o755);
-    }
-    vscode.window.showInformationMessage("Please restart VSCode!");
-    await unlink(tmpPath);
-  } catch (err) {
-    vscode.window.showErrorMessage(JSON.stringify(err));
+  
+  const res = await axios({method: 'get',url: createDownloadURL(),responseType: 'stream'})
+  if (res.status != 200) {
+    vscode.window.showErrorMessage("Download failed: " + res.statusText);
     return;
   }
-  /*await new Promise<void>((resolve, reject) => {
-    const file = fs.createWriteStream(tmpPath);
-    https.get(createDownloadURL(), (response) => {
-      response.pipe(file);
-      file.on("finish", async () => {
-        file.close();
-        const hash = await computeFileHash(tmpPath);
-        const sha256 = createHashForLanguageServer();
-        if (hash === sha256) {
-          const input = fs.createReadStream(tmpPath);
-          const unzip = zlib.createUnzip();
-          unzip.on("error", reject);
-          const output = unzip.on("end", resolve);
-          const extract = output.pipe(createFileExtractor(lspDir));
-          extract.on("error", reject);
-          input.pipe(unzip).pipe(extract);
-        } else {
-          reject(new Error(`Invalid hash for downloaded file (expected ${sha256}, got ${hash})`));
-        }
-      });
-    }).on("error", reject);
-  });*/
+  
+  await res.data.pipe(fs.createWriteStream(tmpPath));
+  const hash = await computeFileHash(tmpPath);
+  const expected = createHashForLanguageServer();
+  if (hash != expected) {
+    vscode.window.showErrorMessage(
+      `Bad hash: Expected ${expected}, got ${hash}!`
+    );
+    return;
+  }
+  const zip = new Admzip(tmpPath);
+  zip.extractAllTo(lspDir);
+  if (os.platform() != "win32") {
+    fs.chmodSync(path.join(lspDir, "Swift-MesonLSP"), 0o755);
+  }
+  vscode.window.showInformationMessage("Please restart VSCode!");
+  await unlink(tmpPath);
+
 }
 
 const getExtensionDir = (): string => {
