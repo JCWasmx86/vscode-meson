@@ -1,7 +1,10 @@
+import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import * as cp from "child_process";
 import * as vscode from "vscode";
+import * as os from "os";
+import * as child_process from "child_process";
 import { createHash, BinaryLike } from "crypto";
 import { Target } from "./meson/types";
 import { ExtensionConfiguration } from "./types";
@@ -148,6 +151,146 @@ export function extensionConfigurationSet<
 ) {
   return getConfiguration().update(key, value, target);
 }
+
+export function canDownloadLanguageServer(): boolean {
+  const platform = os.platform()
+  if (platform != "win32" && platform != "darwin") {
+    return false
+  }
+  const arch = os.arch()
+  return arch != "x64"
+}
+
+function createDownloadURL(): string {
+  const platform = os.platform()
+  const filename = platform == "win32" ? "Swift-MesonLSP-win64.zip" : "Swift-MesonLSP-macos12.zip"
+  return `https://github.com/JCWasmx86/Swift-MesonLSP/releases/download/v1.6/${filename}`
+}
+
+function createHashForLanguageServer(): string {
+  const platform = os.platform()
+  return platform == "win32" ?
+    "3707be8c4aabcbe366f1d7ada66da9f6def38ced8eaee5784fb1701360292c57"
+      : "888929c9abeada1a16b50312146b33741255f88ddf5ff357fbe67dbe7a7a7c98"
+}
+
+
+export async function downloadLanguageServer() {
+  const lspDir = path.join(getExtensionDir(), "lsp");
+  await rmdir(lspDir);
+  await mkdirp(lspDir);
+  const tmpPath = path.join(os.tmpdir(), `lsp-${Date.now()}.zip`);
+  vscode.window.showErrorMessage("curl -L -q " + createDownloadURL() + " -o " + tmpPath);
+  try {
+    const x = child_process.spawnSync("curl", ["-L", "-q", createDownloadURL(), "-o", tmpPath], { maxBuffer: 1024*1024*1024*24 });
+    if (x.status != 0) {
+      vscode.window.showErrorMessage(x.output.toString());
+      return;
+    }
+    const hash = await computeFileHash(tmpPath);
+    const expected = createHashForLanguageServer();
+    vscode.window.showErrorMessage(hash);
+    if (hash != expected) {
+      vscode.window.showErrorMessage(`Bad hash: Expected ${expected}, got ${hash}!`);
+      return;
+    }
+  } catch (err) {
+    vscode.window.showErrorMessage(JSON.stringify(err));
+    return;
+  }
+  /*await new Promise<void>((resolve, reject) => {
+    const file = fs.createWriteStream(tmpPath);
+    https.get(createDownloadURL(), (response) => {
+      response.pipe(file);
+      file.on("finish", async () => {
+        file.close();
+        const hash = await computeFileHash(tmpPath);
+        const sha256 = createHashForLanguageServer();
+        if (hash === sha256) {
+          const input = fs.createReadStream(tmpPath);
+          const unzip = zlib.createUnzip();
+          unzip.on("error", reject);
+          const output = unzip.on("end", resolve);
+          const extract = output.pipe(createFileExtractor(lspDir));
+          extract.on("error", reject);
+          input.pipe(unzip).pipe(extract);
+        } else {
+          reject(new Error(`Invalid hash for downloaded file (expected ${sha256}, got ${hash})`));
+        }
+      });
+    }).on("error", reject);
+  });*/
+}
+
+const getExtensionDir = (): string => {
+  return path.join(os.homedir(), ".vscode-meson");
+};
+
+const computeFileHash = async (filePath: string): Promise<string> => {
+  const hash = crypto.createHash("sha256");
+  const stream = fs.createReadStream(filePath);
+  stream.on("data", (data) => {
+    hash.update(data);
+  });
+  return new Promise<string>((resolve, reject) => {
+    stream.on("error", reject);
+    stream.on("end", () => {
+      resolve(hash.digest("hex"));
+    });
+  });
+};
+
+const createFileExtractor = (targetDir: string) => {
+  const extract = new (require("stream").Writable)();
+  extract._write = (chunk, encoding, callback) => {
+    const entryPath = path.join(targetDir, chunk.path);
+    if (chunk.type === "Directory") {
+      mkdirp(entryPath);
+    } else {
+      const file = fs.createWriteStream(entryPath);
+      file.on("finish", callback);
+      chunk.pipe(file);
+    }
+  };
+  return extract;
+};
+
+const rmdir = async (dir: string): Promise<void> => {
+  if (fs.existsSync(dir)) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await rmdir(entryPath);
+      } else {
+        await unlink(entryPath);
+      }
+    }
+    fs.rmdirSync(dir);
+  }
+};
+
+const mkdirp = async (dir: string): Promise<void> => {
+  if (!fs.existsSync(dir)) {
+    const parentDir = path.dirname(dir);
+    if (parentDir !== dir) {
+      await mkdirp(parentDir);
+    }
+    fs.mkdirSync(dir);
+  }
+};
+
+const unlink = async (filePath: string): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
 
 export function arrayIncludes<T>(array: T[], value: T) {
   return array.indexOf(value) !== -1;

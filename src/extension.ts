@@ -12,6 +12,8 @@ import { getMesonTasks } from "./tasks";
 import { MesonProjectExplorer } from "./treeview";
 import { TargetNode } from "./treeview/nodes/targets"
 import {
+  canDownloadLanguageServer,
+  downloadLanguageServer,
   extensionConfiguration,
   execAsTask,
   workspaceRelative,
@@ -218,6 +220,30 @@ export async function activate(ctx: vscode.ExtensionContext) {
       case Options.automatic:
         extensionConfigurationSet(configureOnOpenKey, true, vscode.ConfigurationTarget.Workspace);
         configureOnOpen = true;
+        break;
+    }
+  }
+
+  if (canDownloadLanguageServer() || true) {
+    enum Options {
+      no = "Not this time",
+      never = "Never",
+      yes = "Yes"
+    }
+    const response = await vscode.window.showInformationMessage(
+      "Would you like to download a language server?",
+      ...Object.values(Options)
+    );
+
+    switch (response) {
+      case Options.no:
+        break;
+
+      case Options.never:
+        break;
+
+      case Options.yes:
+        downloadLanguageServer()
         break;
     }
   }
