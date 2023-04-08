@@ -198,7 +198,6 @@ export async function downloadLanguageServer() {
   await rmdir(lspDir);
   await mkdirp(lspDir);
   const tmpPath = path.join(os.tmpdir(), `lsp-${Date.now()}.zip`);
-  vscode.window.showErrorMessage("curl -L -q " + createDownloadURL() + " -o " + tmpPath);
   try {
     const x = child_process.spawnSync("curl", ["-L", "-q", createDownloadURL(), "-o", tmpPath], { maxBuffer: 1024*1024*1024*24 });
     if (x.status != 0) {
@@ -207,7 +206,6 @@ export async function downloadLanguageServer() {
     }
     const hash = await computeFileHash(tmpPath);
     const expected = createHashForLanguageServer();
-    vscode.window.showErrorMessage(hash);
     if (hash != expected) {
       vscode.window.showErrorMessage(`Bad hash: Expected ${expected}, got ${hash}!`);
       return;
@@ -217,8 +215,8 @@ export async function downloadLanguageServer() {
     if (os.platform() != "win32") {
       fs.chmodSync(path.join(lspDir, "Swift-MesonLSP"), 0o755);
     }
+    vscode.window.showInformationMessage("Please restart VSCode!");
     await unlink(tmpPath);
-    vscode.window.showErrorMessage("Done");
   } catch (err) {
     vscode.window.showErrorMessage(JSON.stringify(err));
     return;
