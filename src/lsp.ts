@@ -12,6 +12,10 @@ import {
     WorkspaceConfiguration,
 } from "vscode"
 
+import {
+    findLanguageServer,
+  } from "./utils";
+
 import * as which from "which"
 
 export class MesonLanguageClient {
@@ -50,7 +54,7 @@ export class MesonLanguageClient {
     }
 
     get languageServerPath(): string | null {
-        return this.config.languageServerPath || which.sync("Swift-MesonLSP", { nothrow: true })
+        return findLanguageServer() || this.config.languageServerPath || which.sync("Swift-MesonLSP", { nothrow: true })
     }
 
     dispose() {

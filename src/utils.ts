@@ -175,6 +175,23 @@ function createHashForLanguageServer(): string {
       : "888929c9abeada1a16b50312146b33741255f88ddf5ff357fbe67dbe7a7a7c98"
 }
 
+export function findLanguageServer(): string | null {
+  const platform = os.platform();
+  if(platform != "win32" && platform != "darwin") {
+    return null;
+  }
+  const arch = os.arch();
+  if(arch != "x64") {
+    return null;
+  }
+  const lspDir = path.join(getExtensionDir(), "lsp");
+  const filename = platform == "win32" ? "Swift-MesonLSP.exe" : "Swift-MesonLSP";
+  const fullpath = path.join(lspDir, filename);
+  if(fs.existsSync(fullpath)) {
+    return fullpath;
+  }
+  return null;
+}
 
 export async function downloadLanguageServer() {
   const lspDir = path.join(getExtensionDir(), "lsp");
@@ -201,6 +218,7 @@ export async function downloadLanguageServer() {
       fs.chmodSync(path.join(lspDir, "Swift-MesonLSP"), 0o755);
     }
     await unlink(tmpPath);
+    vscode.window.showErrorMessage("Done");
   } catch (err) {
     vscode.window.showErrorMessage(JSON.stringify(err));
     return;
