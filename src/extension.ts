@@ -224,7 +224,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     }
   }
 
-  if (canDownloadLanguageServer() || true) {
+  if (canDownloadLanguageServer()) {
     enum Options {
       no = "Not this time",
       never = "Never",
@@ -243,7 +243,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
         break;
 
       case Options.yes:
-        downloadLanguageServer()
+        downloadLanguageServer();
         break;
     }
   }
@@ -336,6 +336,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
     explorer.refresh();
   }
-  let client = new MesonLanguageClient(ctx)
+
+  let client = new MesonLanguageClient(ctx);
   ctx.subscriptions.push(client)
 }

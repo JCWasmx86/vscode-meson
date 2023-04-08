@@ -159,7 +159,7 @@ export function canDownloadLanguageServer(): boolean {
     return false
   }
   const arch = os.arch()
-  return arch != "x64"
+  return arch == "x64" && findLanguageServer() == null;
 }
 
 function createDownloadURL(): string {
