@@ -26,6 +26,7 @@ import {
 } from "./formatters"
 import { TaskQuickPickItem } from "./types";
 import { SwiftMesonLspLanguageClient } from "./lsp/swift-mesonlsp";
+import which = require("which");
 
 export let extensionPath: string;
 let explorer: MesonProjectExplorer;
@@ -208,7 +209,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     "Swift-MesonLSP": SwiftMesonLspLanguageClient
   }
   const client = new possibleServers[lsKey](ctx);
-  const canDownload = client.canDownloadLanguageServer();
+  const canDownload = client.canDownloadLanguageServerAndLanguageServerIsNotFound();
   let registerTooling = true;
   if (canDownload && downloadLanguageServer == "ask") {
     enum Options {
@@ -239,6 +240,31 @@ export async function activate(ctx: vscode.ExtensionContext) {
   } else if (canDownload && downloadLanguageServer == "yes") {
     registerTooling = false;
     client.setupLanguageServer();
+  } else if (client.requiresManualSetup && (downloadLanguageServer == "ask" || which.sync(client.executableName, { nothrow: true }) == null)) {
+    enum Options {
+      yes = "Yes",
+      no = "Not this time",
+      never = "Never"
+    }
+    const response = await vscode.window.showInformationMessage(
+      `Language server support is available, but requires manual setup. Do you want to open a webbrowser with instructions for setting up? (${client.repoURL})`,
+      ...Object.values(Options)
+    );
+    switch (response) {
+      case Options.no:
+        extensionConfigurationSet(downloadLanguageServerKey, "ask", vscode.ConfigurationTarget.Global);
+        break;
+
+      case Options.never:
+        extensionConfigurationSet(downloadLanguageServerKey, "never", vscode.ConfigurationTarget.Global);
+        break;
+
+      case Options.yes:
+        registerTooling = false;
+        vscode.env.openExternal(client.setupURI)
+        extensionConfigurationSet(downloadLanguageServerKey, "yes", vscode.ConfigurationTarget.Global);
+        break;
+    }
   }
 
   if (registerTooling) {

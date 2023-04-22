@@ -12,12 +12,13 @@ import { Executable, LanguageClient, LanguageClientOptions, ServerOptions, Trans
 export abstract class LanguageServerClient {
   private config: WorkspaceConfiguration;
   private ls: LanguageClient | null = null;
-  private executableName: string;
+  executableName: string;
   private context: ExtensionContext;
   private clientOptions: LanguageClientOptions = {
     documentSelector: ["meson", { "scheme": "file", language: "meson" }]
   };
   abstract repoURL: string;
+  abstract setupURI: vscode.Uri
   protected abstract get debugExe(): Executable;
   protected abstract get runExe(): Executable;
 
@@ -35,6 +36,8 @@ export abstract class LanguageServerClient {
   abstract supportsSystem(os: string, arch: string): boolean
 
   abstract get downloadInfo(): [url: string, hash: string] | null;
+
+  abstract get requiresManualSetup(): boolean
 
   restart(): void {
     this.dispose();
@@ -55,12 +58,12 @@ export abstract class LanguageServerClient {
     this.ls.start();
   }
 
-  canDownloadLanguageServer(): boolean {
-    return this.downloadInfo != null && this.findLanguageServer() == null
+  canDownloadLanguageServerAndLanguageServerIsNotFound(): boolean {
+    return this.downloadInfo != null && this.findLanguageServer() == null;
   }
 
   get languageServerPath(): string | null {
-    return this.config.languageServerPath || this.findLanguageServer() || which.sync(this.executableName, { nothrow: true })
+    return this.config.languageServerPath || this.findLanguageServer() || which.sync(this.executableName, { nothrow: true });
   }
 
   async setupLanguageServer(): Promise<void> {

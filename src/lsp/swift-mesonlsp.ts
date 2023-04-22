@@ -1,10 +1,10 @@
 import * as os from "os";
 
 import {
-  ExtensionContext,
+  ExtensionContext, Uri,
 } from "vscode"
 import { LanguageServerClient } from "../lsp";
-import { Executable } from "vscode-languageclient/node";
+import { Executable, VersionedTextDocumentIdentifier } from "vscode-languageclient/node";
 
 export class SwiftMesonLspLanguageClient extends LanguageServerClient {
   private static artifacts: { [key: string]: { name: string, hash: string } } = {
@@ -13,6 +13,7 @@ export class SwiftMesonLspLanguageClient extends LanguageServerClient {
   };
 
   repoURL: string = "https://github.com/JCWasmx86/Swift-MesonLSP";
+  setupURI: Uri = Uri.parse("https://github.com/JCWasmx86/Swift-MesonLSP/tree/main/Docs");
   get runExe(): Executable {
     return {
       command: this.languageServerPath,
@@ -37,6 +38,10 @@ export class SwiftMesonLspLanguageClient extends LanguageServerClient {
       return null
     const artifact = SwiftMesonLspLanguageClient.artifacts[`${platform}-${arch}`];
     return [`${this.repoURL}/releases/download/v2.1/${artifact.name}`, artifact.hash];
+  }
+
+  get requiresManualSetup(): boolean {
+    return os.platform() != "darwin" && os.platform() != "win32";
   }
 
   supportsSystem(os: string, arch: string): boolean {
