@@ -209,9 +209,14 @@
           "type": "string",
           "default": "ask",
           "enum": [
-            "ask",
-            "never",
-            "yes"
+            true,
+            false,
+            "ask"
+          ],
+          "enumDescriptions": [
+            "Download the language server",
+            "Do not download the language server",
+            "Ask every time"
           ],
           "description": "Have VSCode download the language server automatically (MacOS/Windows only for Swift-MesonLSP)"
         }

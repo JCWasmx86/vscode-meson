@@ -8,6 +8,8 @@ export type LinterConfiguration = {
   enabled: boolean,
 }
 
+export type LanguageServer = "Swift-MesonLSP";
+
 export interface ExtensionConfiguration {
   configureOnOpen: boolean | "ask";
   configureOptions: string[];
@@ -27,9 +29,9 @@ export interface ExtensionConfiguration {
     muonConfig: string | null,
   };
   debugOptions: object;
-  languageServer: "Swift-MesonLSP";
+  languageServer: LanguageServer;
   languageServerPath: string;
-  downloadLanguageServer: string;
+  downloadLanguageServer: boolean | "ask";
 }
 
 export interface TaskQuickPickItem extends vscode.QuickPickItem {

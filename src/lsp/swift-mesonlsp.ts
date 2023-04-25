@@ -1,10 +1,8 @@
 import * as os from "os";
+import * as vscode from "vscode";
 
-import {
-  ExtensionContext, Uri,
-} from "vscode"
 import { LanguageServerClient } from "../lsp";
-import { Executable, VersionedTextDocumentIdentifier } from "vscode-languageclient/node";
+import { Executable } from "vscode-languageclient/node";
 
 export class SwiftMesonLspLanguageClient extends LanguageServerClient {
   private static artifacts: { [key: string]: { name: string, hash: string } } = {
@@ -13,40 +11,52 @@ export class SwiftMesonLspLanguageClient extends LanguageServerClient {
   };
 
   repoURL: string = "https://github.com/JCWasmx86/Swift-MesonLSP";
-  setupURI: Uri = Uri.parse("https://github.com/JCWasmx86/Swift-MesonLSP/tree/main/Docs");
+
   get runExe(): Executable {
     return {
-      command: this.languageServerPath || this.executableName,
+      command: this.languageServerPath!.fsPath,
       args: ["--lsp"]
     }
   }
+
   get debugExe(): Executable {
     return {
-      command: this.languageServerPath || this.executableName,
+      command: this.languageServerPath!.fsPath,
       args: ["--lsp"]
     }
   }
 
-  constructor(ctx: ExtensionContext) {
-    super("Swift-MesonLSP", ctx);
+  constructor(languageServerPath: vscode.Uri, context: vscode.ExtensionContext) {
+    super("Swift-MesonLSP", languageServerPath, context);
   }
 
-  get downloadInfo(): [url: string, hash: string] | null {
-    const platform = os.platform();
+  static override artifact(): { url: string, hash: string } | null {
+    // Only need to check Linux
     const arch = os.arch();
-    if (!this.supportsSystem(platform, arch))
-      return null
+    const platform = os.platform();
+    if (arch !== "x64" || platform === "linux")
+      return null;
+
     const artifact = SwiftMesonLspLanguageClient.artifacts[`${platform}-${arch}`];
-    return [`${this.repoURL}/releases/download/v2.1/${artifact.name}`, artifact.hash];
+    return {
+      url: `${SwiftMesonLspLanguageClient.repoURL}/releases/download/v2.1/${artifact.name}`,
+      hash: artifact.hash
+    };
   }
 
-  get requiresManualSetup(): boolean {
-    return os.platform() != "darwin" && os.platform() != "win32";
-  }
-
-  supportsSystem(os: string, arch: string): boolean {
+  static override supportsSystem(): boolean {
+    const arch = os.arch();
     if (arch != "x64")
       return false;
-    return os == "win32" || os == "darwin";
+
+    const platform = os.platform();
+    switch (platform) {
+      case "darwin":
+      case "linux":
+      case "win32":
+        return true;
+      default:
+        return false;
+    }
   }
 }
