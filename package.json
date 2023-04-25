@@ -89,7 +89,7 @@
       },
       {
         "command": "mesonbuild.restartLanguageServer",
-        "title": "Meson: Restart language server"
+        "title": "Meson: Restart Language Server"
       }
     ],
     "configuration": {

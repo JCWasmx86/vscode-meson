@@ -14,7 +14,7 @@ export abstract class LanguageServerClient {
   private ls: LanguageClient | null = null;
   executableName: string;
   private context: ExtensionContext;
-  private clientOptions: LanguageClientOptions = {
+  private static clientOptions: LanguageClientOptions = {
     documentSelector: ["meson", { "scheme": "file", language: "meson" }]
   };
   abstract repoURL: string;
@@ -54,7 +54,7 @@ export abstract class LanguageServerClient {
       transport: TransportKind.stdio
     };
 
-    this.ls = new LanguageClient(this.executableName, `Meson Language Server (${this.executableName})`, serverOptions, this.clientOptions, true);
+    this.ls = new LanguageClient(this.executableName, `Meson Language Server (${this.executableName})`, serverOptions, LanguageServerClient.clientOptions, true);
     this.ls.start();
   }
 

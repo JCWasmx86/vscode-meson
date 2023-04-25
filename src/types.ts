@@ -129,3 +129,9 @@ export type Targets = Target[];
 export type BuildOptions = BuildOption<any>[];
 export type Dependencies = Dependency[];
 export type Tests = Test[];
+
+export enum SettingsKey {
+  DownloadLanguageServer = "downloadLanguageServer",
+  LanguageServer = "languageServer",
+  ConfigureOnOpen = "configureOnOpen",
+}

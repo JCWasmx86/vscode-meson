@@ -24,7 +24,7 @@ import {
 import {
   activateFormatters
 } from "./formatters"
-import { TaskQuickPickItem } from "./types";
+import { SettingsKey, TaskQuickPickItem } from "./types";
 import { SwiftMesonLspLanguageClient } from "./lsp/swift-mesonlsp";
 import which = require("which");
 
@@ -166,8 +166,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
   );
 
   if (!checkMesonIsConfigured(buildDir)) {
-    const configureOnOpenKey = "configureOnOpen";
-    let configureOnOpen = extensionConfiguration(configureOnOpenKey);
+    let configureOnOpen = extensionConfiguration(SettingsKey.ConfigureOnOpen);
     if (configureOnOpen === "ask") {
       enum Options {
         yes = "Yes",
@@ -186,7 +185,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
           break;
 
         case Options.never:
-          extensionConfigurationSet(configureOnOpenKey, false, vscode.ConfigurationTarget.Workspace);
+          extensionConfigurationSet(SettingsKey.ConfigureOnOpen, false, vscode.ConfigurationTarget.Workspace);
           break;
 
         case Options.yes:
@@ -194,17 +193,15 @@ export async function activate(ctx: vscode.ExtensionContext) {
           break;
 
         case Options.always:
-          extensionConfigurationSet(configureOnOpenKey, true, vscode.ConfigurationTarget.Workspace);
+          extensionConfigurationSet(SettingsKey.ConfigureOnOpen, true, vscode.ConfigurationTarget.Workspace);
           configureOnOpen = true;
           break;
       }
     }
   }
 
-  const downloadLanguageServerKey = "downloadLanguageServer";
-  const downloadLanguageServer = extensionConfiguration(downloadLanguageServerKey);
-  const languageServerKey = "languageServer"
-  const lsKey = extensionConfiguration(languageServerKey);
+  const downloadLanguageServer = extensionConfiguration(SettingsKey.DownloadLanguageServer);
+  const lsKey = extensionConfiguration(SettingsKey.LanguageServer);
   const possibleServers = {
     "Swift-MesonLSP": SwiftMesonLspLanguageClient
   }
@@ -224,17 +221,17 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
     switch (response) {
       case Options.no:
-        extensionConfigurationSet(downloadLanguageServerKey, "ask", vscode.ConfigurationTarget.Global);
+        extensionConfigurationSet(SettingsKey.DownloadLanguageServer, "ask", vscode.ConfigurationTarget.Global);
         break;
 
       case Options.never:
-        extensionConfigurationSet(downloadLanguageServerKey, "never", vscode.ConfigurationTarget.Global);
+        extensionConfigurationSet(SettingsKey.DownloadLanguageServer, "never", vscode.ConfigurationTarget.Global);
         break;
 
       case Options.yes:
         registerTooling = false;
         client.setupLanguageServer();
-        extensionConfigurationSet(downloadLanguageServerKey, "yes", vscode.ConfigurationTarget.Global);
+        extensionConfigurationSet(SettingsKey.DownloadLanguageServer, "yes", vscode.ConfigurationTarget.Global);
         break;
     }
   } else if (canDownload && downloadLanguageServer == "yes") {
@@ -252,17 +249,17 @@ export async function activate(ctx: vscode.ExtensionContext) {
     );
     switch (response) {
       case Options.no:
-        extensionConfigurationSet(downloadLanguageServerKey, "ask", vscode.ConfigurationTarget.Global);
+        extensionConfigurationSet(SettingsKey.DownloadLanguageServer, "ask", vscode.ConfigurationTarget.Global);
         break;
 
       case Options.never:
-        extensionConfigurationSet(downloadLanguageServerKey, "never", vscode.ConfigurationTarget.Global);
+        extensionConfigurationSet(SettingsKey.DownloadLanguageServer, "never", vscode.ConfigurationTarget.Global);
         break;
 
       case Options.yes:
         registerTooling = false;
         vscode.env.openExternal(client.setupURI)
-        extensionConfigurationSet(downloadLanguageServerKey, "yes", vscode.ConfigurationTarget.Global);
+        extensionConfigurationSet(SettingsKey.DownloadLanguageServer, "yes", vscode.ConfigurationTarget.Global);
         break;
     }
   }
