@@ -16,13 +16,13 @@ export class SwiftMesonLspLanguageClient extends LanguageServerClient {
   setupURI: Uri = Uri.parse("https://github.com/JCWasmx86/Swift-MesonLSP/tree/main/Docs");
   get runExe(): Executable {
     return {
-      command: this.languageServerPath,
+      command: this.languageServerPath || this.executableName,
       args: ["--lsp"]
     }
   }
   get debugExe(): Executable {
     return {
-      command: this.languageServerPath,
+      command: this.languageServerPath || this.executableName,
       args: ["--lsp"]
     }
   }

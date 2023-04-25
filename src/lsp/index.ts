@@ -63,7 +63,7 @@ export abstract class LanguageServerClient {
   }
 
   get languageServerPath(): string | null {
-    return this.config.languageServerPath || this.findLanguageServer() || which.sync(this.executableName, { nothrow: true });
+    return this.config["languageServerPath"] || this.findLanguageServer() || which.sync(this.executableName, { nothrow: true });
   }
 
   async setupLanguageServer(): Promise<void> {
@@ -82,9 +82,9 @@ export abstract class LanguageServerClient {
     );
     const tmpPath = path.join(os.tmpdir(), `lsp-${Date.now()}.zip`);
     try {
-      this.downloadFile(downloadInfo[0], tmpPath).then(() => {
+      this.downloadFile(downloadInfo![0], tmpPath).then(() => {
         this.computeFileHash(tmpPath).then(str => {
-          const expected = downloadInfo[1];
+          const expected = downloadInfo![1];
           if (str != expected) {
             vscode.window.showErrorMessage(`Bad hash: Expected ${expected}, got ${str}!`);
             fs.unlinkSync(tmpPath);
@@ -133,7 +133,7 @@ export abstract class LanguageServerClient {
       const request = https.get(url, (response) => {
         if (response.statusCode === 302 || response.statusCode === 301) {
           const redirectUrl = response.headers.location;
-          this.downloadFile(redirectUrl, dest)
+          this.downloadFile(redirectUrl!, dest)
             .then(() => resolve())
             .catch((err) => reject(err));
         } else {
