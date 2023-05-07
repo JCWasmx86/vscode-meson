@@ -25,9 +25,7 @@ import {
   activateFormatters
 } from "./formatters"
 import { SettingsKey, TaskQuickPickItem } from "./types";
-import { SwiftMesonLspLanguageClient } from "./lsp/swift-mesonlsp";
-import which = require("which");
-import { LanguageServerClient } from "./lsp";
+import { createLanguageServerClient } from "./lsp/common";
 
 export let extensionPath: string;
 let explorer: MesonProjectExplorer;
@@ -235,7 +233,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     return false;
   }
 
-  let client = await LanguageServerClient.create(server, await shouldDownload(downloadLanguageServer), ctx);
+  let client = await createLanguageServerClient(server, await shouldDownload(downloadLanguageServer), ctx);
   if (client !== null) {
     ctx.subscriptions.push(client);
 
@@ -248,7 +246,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(
     vscode.commands.registerCommand("mesonbuild.restartLanguageServer", async () => {
       if (client === null) {
-        client = await LanguageServerClient.create(server, await shouldDownload(downloadLanguageServer), ctx);
+        client = await createLanguageServerClient(server, await shouldDownload(downloadLanguageServer), ctx);
         if (client !== null) {
           ctx.subscriptions.push(client);
           client.start();

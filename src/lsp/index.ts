@@ -7,7 +7,6 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
-import { SwiftMesonLspLanguageClient } from "./swift-mesonlsp";
 import * as storage from "../storage";
 import { LanguageServer } from "../types";
 
@@ -82,7 +81,7 @@ export abstract class LanguageServerClient {
     });
   }
 
-  private static async download(server: LanguageServer, context: vscode.ExtensionContext): Promise<vscode.Uri | null> {
+  static async download(server: LanguageServer, context: vscode.ExtensionContext): Promise<vscode.Uri | null> {
     const lspDir = storage.uri(storage.Location.LSP, context).fsPath;
     const artifact = this.artifact();
     if (artifact === null)
@@ -124,9 +123,9 @@ export abstract class LanguageServerClient {
     return uri;
   }
 
-  private static resolveLanguageServerPath(server: LanguageServer, context: vscode.ExtensionContext): vscode.Uri | null {
+  static resolveLanguageServerPath(server: LanguageServer, context: vscode.ExtensionContext): vscode.Uri | null {
     const config = vscode.workspace.getConfiguration("mesonbuild");
-    if (config["languageServerPath"] !== null)
+    if (config["languageServerPath"] !== null && config["languageServerPath"] != "")
       return vscode.Uri.from({ scheme: "file", path: config["languageServerPath"] });
 
     const cached = LanguageServerClient.cachedLanguageServer(server, context);
@@ -146,37 +145,6 @@ export abstract class LanguageServerClient {
 
   protected static artifact(): { url: string, hash: string } | null {
     return null;
-  }
-
-  static async create(server: LanguageServer, download: boolean, context: vscode.ExtensionContext): Promise<LanguageServerClient | null> {
-    const serverToClass = (server: LanguageServer) => {
-      switch (server) {
-        case "Swift-MesonLSP":
-          return SwiftMesonLspLanguageClient;
-      }
-    }
-
-    const klass = serverToClass(server);
-    if (!klass.supportsSystem()) {
-      vscode.window.showErrorMessage("The configured language server does not support the current system.");
-      return null;
-    }
-
-    let languageServerPath = LanguageServerClient.resolveLanguageServerPath(server, context);
-    if (languageServerPath === null) {
-      if (download) {
-        languageServerPath = await LanguageServerClient.download(server, context);
-        if (languageServerPath === null) {
-          vscode.window.showErrorMessage("Failed to download the language server.");
-          return null;
-        }
-      } else {
-        vscode.window.showErrorMessage("Failed to find a language server on the system.");
-        return null;
-      }
-    }
-
-    return new klass(languageServerPath, context);
   }
 
   dispose() {
