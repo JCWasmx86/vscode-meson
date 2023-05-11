@@ -21,6 +21,7 @@ export abstract class LanguageServerClient {
   readonly server: LanguageServer;
 
   static readonly repoURL: string;
+  static readonly setupURL: string;
 
   protected abstract get debugExe(): Executable;
   protected abstract get runExe(): Executable;
