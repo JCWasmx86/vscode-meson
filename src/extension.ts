@@ -236,6 +236,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
   let client = await createLanguageServerClient(server, await shouldDownload(downloadLanguageServer), ctx);
   if (client !== null) {
     ctx.subscriptions.push(client);
+    client.start();
 
     getOutputChannel().appendLine("Not enabling the muon linter/formatter because the language server is active.");
   } else {
