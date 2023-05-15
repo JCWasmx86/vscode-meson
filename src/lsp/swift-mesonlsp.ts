@@ -11,7 +11,7 @@ export class SwiftMesonLspLanguageClient extends LanguageServerClient {
   };
 
   repoURL: string = "https://github.com/JCWasmx86/Swift-MesonLSP";
-  setupURL: string = "https://github.com/JCWasmx86/Swift-MesonLSP/tree/main/Docs";
+  static override setupURL: string = "https://github.com/JCWasmx86/Swift-MesonLSP/tree/main/Docs";
 
   get runExe(): Executable {
     return {
