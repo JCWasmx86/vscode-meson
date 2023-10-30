@@ -19,6 +19,7 @@ import { activateLinters } from "./linters";
 import { activateFormatters } from "./formatters";
 import { SettingsKey, TaskQuickPickItem } from "./types";
 import { createLanguageServerClient } from "./lsp/common";
+import { LanguageServerClient } from "./lsp";
 
 export let extensionPath: string;
 let explorer: MesonProjectExplorer;
@@ -26,6 +27,7 @@ let watcher: vscode.FileSystemWatcher;
 let compileCommandsWatcher: vscode.FileSystemWatcher;
 let mesonWatcher: vscode.FileSystemWatcher;
 let controller: vscode.TestController;
+let client: LanguageServerClient | null;
 
 export async function activate(ctx: vscode.ExtensionContext) {
   extensionPath = ctx.extensionPath;
@@ -244,7 +246,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     return false;
   };
 
-  let client = await createLanguageServerClient(server, await shouldDownload(downloadLanguageServer), ctx);
+  client = await createLanguageServerClient(server, await shouldDownload(downloadLanguageServer), ctx);
   if (client !== null && server == "Swift-MesonLSP") {
     ctx.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
@@ -325,4 +327,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
       runTask(taskItem.task);
     }
   }
+}
+
+export async function deactivate(ctx: vscode.ExtensionContext): Promise<void> {
+  await client?.dispose();
 }

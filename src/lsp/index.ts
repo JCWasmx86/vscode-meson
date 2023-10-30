@@ -168,9 +168,9 @@ export abstract class LanguageServerClient {
     return null;
   }
 
-  dispose() {
+  async dispose() {
     if (this.ls !== null) {
-      this.ls.stop();
+      await this.ls.stop(250);
       this.ls = null;
     }
   }
